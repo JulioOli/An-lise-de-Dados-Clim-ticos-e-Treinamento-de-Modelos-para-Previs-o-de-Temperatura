@@ -1,0 +1,9 @@
+{
+    "shortcuts": [
+        {
+            "command": "jupyterlab_black:format",
+            "keys": ["Alt Shift F"],
+            "selector": ".jp-Notebook.jp-mod-editMode"
+        }
+    ]
+} 
