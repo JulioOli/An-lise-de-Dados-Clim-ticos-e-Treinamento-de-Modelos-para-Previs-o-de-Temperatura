@@ -1,36 +1,79 @@
-# Análise de Dados Climáticos e Treinamento de Modelos para Previsão de Temperatura
+# 🌤️ Análise Comparativa de Modelos Climáticos
 
-Este repositório contém um projeto de análise de dados climáticos e desenvolvimento de modelos preditivos para previsão de temperatura.
+## Descrição
+Este projeto apresenta uma análise comparativa sistemática de modelos de machine learning para previsão de dados meteorológicos, comparando abordagens com e sem lag-features.
 
-## Conteúdo
 
-- **Análise Exploratória de Dados**: Notebooks com análise detalhada dos dados climáticos históricos
-- **Modelos de Machine Learning**: Implementação e comparação de diferentes modelos para previsão de temperatura
-- **Visualizações**: Gráficos e visualizações dos dados e resultados dos modelos
-- **Modelos Salvos**: Arquivos .joblib com os modelos treinados
+## 🎯 Principais Descobertas
 
-## Principais Arquivos
+- ✅ **Random Forest sem lag features** foi o melhor modelo (R² = 0.9121)
+- ⚠️ **Lag features não melhoraram** a performance paradoxalmente
+- 🔥 **temp_maxima_lag_1** é a feature mais importante quando presente (58.9%)
+- 📊 **Pressão atmosférica** e **umidade relativa mínima** são cruciais sem lag features
 
-- `Analise_Comparativa_Modelos.ipynb`: Notebook com comparação detalhada entre diferentes modelos
-- `EDA_e_Treinamento_de_Modelos_dados-INMET.ipynb`: Notebook com análise exploratória e treinamento inicial
-- `dados_climaticos_com_lags.csv`: Dataset processado com features de lag para treinamento
-- `model_comparison_results.csv`: Resultados comparativos dos diferentes modelos
+## 🚀 Como Executar
 
-## Requisitos
-
-Os requisitos do projeto estão listados no arquivo `requirements.txt`.
-
+### Dashboard Web (React)
+```bash
+cd website/
+npm install
+npm start
+# Acesse: http://localhost:3000
 ```
+
+### Dashboard Streamlit
+```bash
 pip install -r requirements.txt
+cd dashboards/
+streamlit run dashboard_streamlit.py
 ```
 
-## Modelos Implementados
+### Notebooks
+```bash
+pip install -r requirements.txt
+jupyter lab notebooks/
+```
 
-- Regressão Linear
-- Random Forest
-- Gradient Boosting
-- Support Vector Regression (SVR)
+## 🛠️ Tecnologias Utilizadas
 
-## Resultados
+- **Python**: Pandas, Scikit-learn, Matplotlib, Seaborn
+- **Machine Learning**: Random Forest, Gradient Boosting, SVR
+- **Interpretabilidade**: SHAP, LIME
+- **Web**: React, Vite, Tailwind CSS, Recharts
+- **Dashboards**: Streamlit, Plotly
 
-Os modelos foram avaliados utilizando métricas como RMSE, MAE e R². Os resultados detalhados podem ser encontrados nos notebooks de análise. 
+## 📊 Modelos Avaliados
+
+| Modelo | Tipo | RMSE | R² | MAE |
+|--------|------|------|----|----|
+| Random Forest | Sem Lag | 1.1567 | **0.9121** | 0.8492 |
+| Gradient Boosting | Sem Lag | 1.2518 | 0.8970 | 0.9228 |
+| Random Forest | Com Lag | 1.2936 | 0.8786 | 0.9328 |
+| Gradient Boosting | Com Lag | 1.2680 | 0.8834 | 0.9474 |
+| SVR | Sem Lag | 3.5487 | 0.1724 | 2.7225 |
+| SVR | Com Lag | 3.5256 | 0.0983 | 2.7268 |
+
+## 🔬 Metodologia
+
+1. **Preparação dos Dados**: Carregamento dos dados INMET, tratamento de valores faltantes
+2. **Feature Engineering**: Criação de lag features (1, 2, 3, 7 dias)
+3. **Modelagem**: Treinamento de 6 modelos diferentes
+4. **Avaliação**: Métricas RMSE, MAE, R²
+5. **Interpretabilidade**: Análise SHAP e LIME
+
+## 📈 Visualizações
+
+O projeto inclui dashboards interativos com:
+- Comparações de performance entre modelos
+- Análises de correlação
+- Importância das features
+- Análises de interpretabilidade
+- Dados técnicos e metodologia
+
+## 🤝 Contribuição
+
+Este é um projeto de Iniciação Científica desenvolvido por Danilo Cotozika.
+
+## 📧 Contato
+
+Para mais informações sobre o projeto, entre em contato através do repositório.

@@ -1,0 +1,423 @@
+import React, { useState, useEffect } from 'react';
+
+const App = () => {
+  const [modelData, setModelData] = useState([]);
+  const [climateData, setClimateData] = useState([]);
+  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedMetrics, setSelectedMetrics] = useState(['RMSE', 'R2']);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Processar dados do modelo ao carregar
+  useEffect(() => {
+    // Dados do arquivo model_comparison_results.csv
+    const rawModelData = [
+      { Model: 'Linear Regression', RMSE: 0.66, R2: 0.96 },
+      { Model: 'Linear Regression (com Lags)', RMSE: 0.6580128278347698, R2: 0.9643592893328123 },
+      { Model: 'Random Forest Regressor', RMSE: 0.5703415148010184, R2: 0.9705414327566596 },
+      { Model: 'Gradient Boosting Regressor', RMSE: 0.567689742245786, R2: 0.9708147280252439 },
+      { Model: 'Support Vector Regressor', RMSE: 0.5992001393031398, R2: 0.9674848724250338 }
+    ];
+    setModelData(rawModelData);
+
+    // Processar dados climáticos (apenas as primeiras 50 linhas para performance)
+    const rawClimateText = `2018-04-23,0.0,965.8,14.5,30.5,24.4,19.0,55.5,33.0,7.6,1.6,24.2,25.0,25.3,22.0,18.8,19.9,20.3,18.4,30.1,30.7,31.1,27.2,45.7,46.2,46.0,68.9,965.2,966.2,967.6,969.6
+2018-04-24,0.0,967.1,14.5,31.0,24.8,19.4,55.1,28.0,6.6,1.4,24.4,24.2,25.0,22.8,19.0,18.8,19.9,18.3,30.5,30.1,30.7,28.8,55.5,45.7,46.2,63.0,965.8,965.2,966.2,969.0
+2018-04-25,0.0,967.4,14.8,31.5,25.0,19.3,54.9,30.0,6.4,1.5,24.8,24.4,24.2,23.4,19.4,19.0,18.8,17.9,31.0,30.5,30.1,28.8,55.1,55.5,45.7,61.9,967.1,965.8,965.2,969.9
+2018-04-26,0.0,966.2,15.1,31.7,25.4,19.6,55.0,29.0,7.2,1.3,25.0,24.8,24.4,24.3,19.3,19.4,19.0,19.1,31.5,31.0,30.5,29.9,54.9,55.1,55.5,55.0,967.4,967.1,965.8,968.9
+2018-04-27,0.0,965.7,16.0,32.7,25.9,20.5,56.4,30.0,6.7,1.7,25.4,25.0,24.8,25.3,19.6,19.3,19.4,20.3,31.7,31.5,31.0,31.1,55.0,54.9,55.1,46.0,966.2,967.4,967.1,967.6
+2018-04-28,0.0,966.6,16.2,32.1,26.5,21.5,54.8,33.0,6.0,1.4,25.9,25.4,25.0,25.0,20.5,19.6,19.3,19.9,32.7,31.7,31.5,30.7,56.4,55.0,54.9,46.2,965.7,966.2,967.4,966.2
+2022-03-25,10.2,962.2,19.625,25.7,21.8,19.5,82.4,69.0,8.5,0.6,26.0,25.5,24.2,28.4,21.5,19.9,18.9,24.1,32.7,32.0,29.9,33.5,66.7,60.0,60.8,63.8,961.4,963.1,965.0,963.0
+2022-03-26,7.6,961.8,20.15,27.8,22.6,19.3,75.45,64.0,5.2,0.3,21.8,26.0,25.5,24.9,19.5,21.5,19.9,23.3,25.7,32.7,32.0,29.5,82.4,66.7,60.0,80.8,962.2,961.4,963.1,963.4
+2022-03-27,3.8,963.3,20.675,30.7,24.3,21.3,68.5,53.0,4.4,0.3,22.6,21.8,26.0,24.1,19.3,19.5,21.5,22.3,27.8,25.7,32.7,26.7,75.45,82.4,66.7,78.8,961.8,962.2,961.4,964.5
+2020-07-22,0.0,966.2,9.4,30.0,23.3,17.9,43.2,24.0,5.5,1.0,22.6,21.9,22.4,20.6,17.6,16.7,18.4,15.2,29.3,28.6,27.2,25.6,45.6,43.8,48.8,72.2,966.7,967.9,968.1,968.1
+2020-07-23,0.0,966.2,10.3,30.3,23.7,18.3,44.3,26.0,5.8,1.2,23.3,22.6,21.9,20.1,17.9,17.6,16.7,13.7,30.0,29.3,28.6,27.3,43.2,45.6,43.8,62.8,966.2,966.7,967.9,968.6
+2020-07-24,0.0,965.8,9.0,29.5,23.2,18.8,41.8,23.0,8.4,1.0,23.7,23.3,22.6,23.4,18.3,17.9,17.6,16.4,30.3,30.0,29.3,29.9,44.3,43.2,45.6,53.3,966.2,966.2,966.7,968.0
+2021-03-10,8.6,959.4,18.2,32.9,25.0,19.3,68.1,39.0,6.0,1.0,24.4,24.1,25.1,23.8,21.3,19.6,20.8,20.8,33.2,32.2,32.8,28.4,79.8,74.6,72.8,72.3,960.7,961.9,960.9,964.5
+2021-03-11,0.2,959.9,17.0,34.1,27.1,22.2,58.2,21.0,9.0,1.3,25.0,24.4,24.1,22.2,19.3,21.3,19.6,21.2,32.9,33.2,32.2,27.0,68.1,79.8,74.6,72.96666666666667,959.4,960.7,961.9,963.6
+2021-03-12,0.0,962.3,16.3,34.5,27.3,21.3,53.3,28.0,7.4,1.0,27.1,25.0,24.4,22.4,22.2,19.3,21.3,19.6,34.1,32.9,33.2,28.5,58.2,68.1,79.8,73.63333333333333,959.9,959.4,960.7,960.1
+2015-10-15,0.0,960.6,18.3,36.2,30.3,24.3,49.9,30.0,10.5,0.7,27.6,21.2,18.6,30.0,19.3,16.2,17.9,24.4,35.0,28.0,23.3,35.4,58.9,76.6,92.3,53.1,961.5,965.1,966.9,960.4
+2015-10-16,0.0,962.9,18.8,36.6,30.6,25.4,51.0,27.0,5.0,0.4,30.3,27.6,21.2,23.5,24.3,19.3,16.2,20.5,36.2,35.0,28.0,31.1,49.9,58.9,76.6,81.9,960.6,961.5,965.1,961.0
+2015-10-17,0.0,963.9,18.1,37.1,29.9,23.9,51.6,23.0,8.5,1.0,30.6,30.3,27.6,22.3,25.4,24.3,19.3,19.4,36.6,36.2,35.0,27.7,51.0,49.9,58.9,85.7,962.9,960.6,961.5,964.4
+2015-10-18,0.0,965.6,16.1,31.1,24.8,18.4,59.6,40.0,13.2,2.9,29.9,30.6,30.3,20.3,23.9,25.4,24.3,19.8,37.1,36.6,36.2,21.5,51.6,51.0,49.9,93.0,963.9,962.9,960.6,965.2
+2015-10-19,0.0,963.3,15.3,33.3,25.0,16.7,57.5,35.0,10.1,2.4,24.8,29.9,30.6,18.6,18.4,23.9,25.4,17.9,31.1,37.1,36.6,23.3,59.6,51.6,51.0,92.3,965.6,963.9,962.9,966.9
+2015-10-20,0.0,960.5,18.4,36.6,29.3,22.7,53.8,32.0,8.9,1.6,25.0,24.8,29.9,21.2,16.7,18.4,23.9,16.2,33.3,31.1,37.1,28.0,57.5,59.6,51.6,76.6,963.3,965.6,963.9,965.1
+2016-09-15,0.0,965.8,3.4,27.3,20.2,13.5,34.8,18.0,6.2,1.2,21.5,27.9,27.7,12.9,16.3,23.4,22.0,9.0,28.7,33.2,34.0,16.6,47.8,35.5,38.4,75.3,964.2,960.1,961.2,969.0
+2016-09-16,0.0,965.5,6.4,29.1,21.8,15.6,38.4,16.0,9.9,1.4,20.2,21.5,27.9,18.7,13.5,16.3,23.4,10.6,27.3,28.7,33.2,28.7,34.8,47.8,35.5,65.5,965.8,964.2,960.1,968.5
+2016-09-17,0.0,964.2,12.3,32.6,24.2,17.0,50.0,28.0,7.2,1.3,21.8,20.2,21.5,22.3,15.6,13.5,16.3,15.2,29.1,27.3,28.7,30.3,38.4,34.8,47.8,58.0,965.5,965.8,964.2,969.1
+2022-04-27,0.0,962.9,16.6,32.7,27.2,22.2,54.0,33.0,7.9,0.5,27.2,25.3,23.4,23.8,23.1,19.4,17.4,17.9,32.6,31.6,30.2,31.2,54.6,61.7,74.0,60.7,963.8,965.0,965.2,965.4
+2022-04-28,0.0,965.0,16.6,32.9,27.2,22.8,53.7,34.0,8.1,0.6,27.2,27.2,25.3,24.8,22.2,23.1,19.4,19.4,32.7,32.6,31.6,31.4,54.0,54.6,61.7,49.9,962.9,963.8,965.0,963.6
+2022-04-29,0.0,966.0,17.1,33.4,25.6,23.0,55.0,31.0,7.3,0.3,27.2,27.2,27.2,25.8,22.8,22.2,23.1,20.5,32.9,32.7,32.6,31.8,53.7,54.0,54.6,49.4,965.0,962.9,963.8,959.7
+2015-10-21,0.0,960.4,18.8,35.9,29.4,23.5,54.5,34.0,14.9,1.9,29.3,25.0,24.8,27.6,22.7,16.7,18.4,19.3,36.6,33.3,31.1,35.0,53.8,57.5,59.6,58.9,960.5,963.3,965.6,961.5
+2015-10-22,0.0,959.6,19.5,36.6,30.3,26.4,54.6,32.0,15.6,1.5,29.4,29.3,25.0,30.3,23.5,22.7,16.7,24.3,35.9,36.6,33.3,36.2,54.5,53.8,57.5,49.9,960.4,960.5,963.3,960.6
+2015-10-23,5.4,964.0,18.0,28.6,22.6,19.7,75.6,56.0,11.2,2.1,30.3,29.4,29.3,30.6,26.4,23.5,22.7,25.4,36.6,35.9,36.6,36.6,54.6,54.5,53.8,51.0,959.6,960.4,960.5,962.9
+2016-09-18,0.0,963.8,14.7,34.9,27.9,20.3,46.2,27.0,10.0,2.0,24.2,21.8,20.2,25.1,17.0,15.6,13.5,17.9,32.6,29.1,27.3,32.6,50.0,38.4,34.8,54.0,964.2,965.5,965.8,966.2
+2016-09-19,0.0,965.6,16.2,29.2,21.1,19.1,74.9,41.0,12.8,2.1,27.9,24.2,21.8,27.7,20.3,17.0,15.6,22.0,34.9,32.6,29.1,34.0,46.2,50.0,38.4,38.4,963.8,964.2,965.5,961.2
+2016-09-20,4.4,966.2,15.2,27.0,21.0,17.3,73.8,34.0,7.2,1.3,21.1,27.9,24.2,27.9,19.1,20.3,17.0,23.4,29.2,34.9,32.6,33.2,74.9,46.2,50.0,35.5,965.6,963.8,964.2,960.1
+2017-04-15,0.0,965.7,16.7,32.1,26.0,20.5,57.8,38.0,6.4,1.4,24.2,23.8,24.6,24.6,18.2,18.7,21.0,22.6,30.9,29.7,31.4,28.2,65.3,68.6,85.9,85.6,965.7,965.6,964.6,964.3
+2017-04-16,0.0,964.6,17.3,29.8,24.3,22.7,65.4,47.0,10.0,1.6,26.0,24.2,23.8,26.2,20.5,18.2,18.7,21.7,32.1,30.9,29.7,31.2,57.8,65.3,68.6,69.9,965.7,965.7,965.6,963.8
+2017-04-17,0.0,964.0,18.1,30.1,24.0,18.4,72.5,40.0,7.1,0.8,24.3,26.0,24.2,26.6,22.7,20.5,18.2,21.8,29.8,32.1,30.9,33.0,65.4,57.8,65.3,65.8,964.6,965.7,965.7,963.5
+2022-05-03,0.0,962.4,15.2,32.7,24.9,21.3,55.0,31.0,9.5,1.2,26.3,25.15,24.0,27.2,21.6,21.2,18.5,23.1,32.3,31.5,30.0,32.6,51.3,59.1,65.4,54.6,963.4,963.7,965.9,963.8
+2022-05-04,9.0,964.8,14.799999999999999,20.7,16.0,12.9,78.7,57.0,10.1,2.9,24.9,26.3,25.15,27.2,21.3,21.6,21.2,22.2,32.7,32.3,31.5,32.7,55.0,51.3,59.1,54.0,962.4,963.4,963.7,962.9
+2022-05-05,4.5,967.6,14.4,21.0,17.0,14.0,73.5,57.0,4.0,0.2,16.0,24.9,26.3,27.2,12.9,21.3,21.6,22.8,20.7,32.7,32.3,32.9,78.7,55.0,51.3,53.7,964.8,962.4,963.4,965.0
+2017-04-18,0.0,965.1,16.2,29.0,23.7,19.2,64.0,44.0,8.8,2.4,24.0,24.3,26.0,25.6,18.4,22.7,20.5,22.7,30.1,29.8,32.1,32.6,72.5,65.4,57.8,79.9,964.0,964.6,965.7,964.0
+2017-04-19,0.0,964.7,15.1,28.1,22.6,17.3,63.3,51.0,10.2,2.3,23.7,24.0,24.3,24.6,19.2,18.4,22.7,21.0,29.0,30.1,29.8,31.4,64.0,72.5,65.4,85.9,965.1,964.0,964.6,964.6
+2017-04-20,0.0,961.9,17.7,26.8,22.0,19.5,78.0,62.0,17.2,2.1,22.6,23.7,24.0,23.8,17.3,19.2,18.4,18.7,28.1,29.0,30.1,29.7,63.3,64.0,72.5,68.6,964.7,965.1,964.0,965.6
+2020-02-10,7.8,962.0,20.35,29.4,24.6,22.6,79.65,66.0,6.9,1.7,25.1,25.0,25.1,23.1,22.2,21.2,21.7,20.6,29.1,30.7,30.4,28.7,81.5,75.4,78.8,81.13333333333334,960.8,960.2,960.8,963.0
+2020-02-11,2.6,963.8,19.1,26.6,23.3,20.5,77.8,67.0,9.2,2.0,24.6,25.1,25.0,24.1,22.6,22.2,21.2,20.4,29.4,29.1,30.7,30.5,79.65,81.5,75.4,83.5,962.0,960.8,960.2,962.8
+2020-02-12,0.0,963.5,17.1,30.2,23.8,18.1,67.3,44.0,8.9,1.9,23.3,24.6,25.1,25.7,20.5,22.6,22.2,22.3,26.6,29.4,29.1,30.8,77.8,79.65,81.5,76.6,963.8,962.0,960.8,962.4
+2021-03-25,0.0,964.3,18.0,34.2,28.2,22.7,55.8,32.0,7.9,1.3,28.6,27.6,28.2,24.1,24.0,22.5,24.0,19.8,34.6,33.5,33.8,32.6,54.4,56.4,56.2,73.9,964.3,964.7,964.8,961.2
+2021-03-26,0.0,963.4,18.3,35.0,29.1,24.7,53.8,32.0,5.6,1.1,28.2,28.6,27.6,24.7,22.7,24.0,22.5,21.9,34.2,34.6,33.5,31.1,55.8,54.4,56.4,79.5,964.3,964.3,964.7,962.5
+2021-03-27,0.0,962.8,18.1,34.4,28.3,24.1,55.3,36.0,7.0,1.6,29.1,28.2,28.6,25.8,24.7,22.7,24.0,21.4,35.0,34.2,34.6,31.3,53.8,55.8,54.4,73.4,963.4,964.3,964.3,964.9`;
+
+    const lines = rawClimateText.split('\n').slice(0, 50); // Limitar para performance
+    const headers = [
+      'Data', 'Precipitacao', 'PressaoAtm', 'TempMedia', 'TempMax', 'TempMin', 'UmidadeRelativa',
+      'VelocidadeVento', 'RadiacaoSolar', 'Evapotranspiracao'
+    ];
+
+    const processedData = lines.map(line => {
+      const values = line.split(',');
+      return {
+        Data: values[0],
+        Precipitacao: parseFloat(values[1]),
+        PressaoAtm: parseFloat(values[2]),
+        TempMedia: parseFloat(values[3]),
+        TempMax: parseFloat(values[4]),
+        TempMin: parseFloat(values[5]),
+        UmidadeRelativa: parseFloat(values[6]),
+        VelocidadeVento: parseFloat(values[7]),
+        RadiacaoSolar: parseFloat(values[8]),
+        Evapotranspiracao: parseFloat(values[9])
+      };
+    });
+
+    setClimateData(processedData);
+  }, []);
+
+  // Obter modelos ordenados
+  const getSortedModels = () => {
+    return [...modelData].sort((a, b) => {
+      if (selectedMetrics.includes('RMSE') && selectedMetrics.includes('R2')) {
+        // Ordenar por RMSE (ascendente) e R2 (descendente)
+        if (a.RMSE !== b.RMSE) return a.RMSE - b.RMSE;
+        return b.R2 - a.R2;
+      } else if (selectedMetrics.includes('RMSE')) {
+        return a.RMSE - b.RMSE;
+      } else if (selectedMetrics.includes('R2')) {
+        return b.R2 - a.R2;
+      }
+      return 0;
+    });
+  };
+
+  // Paginação para dados climáticos
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentClimateData = climateData.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(climateData.length / itemsPerPage);
+
+  // Função para formatar números
+  const formatNumber = (num) => {
+    if (typeof num === 'number') {
+      return num.toFixed(3);
+    }
+    return num;
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <header className="bg-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <h1 className="text-4xl font-bold text-gray-900 text-center">
+            Dashboard de Análise Climática
+          </h1>
+          <p className="text-center text-gray-600 mt-2">
+            Visualização e comparação de modelos preditivos com dados climáticos
+          </p>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Seção de Comparação de Modelos */}
+        <section className="mb-12">
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Comparação de Modelos Preditivos</h2>
+            
+            {/* Filtros */}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Métricas a exibir:</label>
+                <div className="flex gap-4">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedMetrics.includes('RMSE')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedMetrics([...selectedMetrics, 'RMSE']);
+                        } else {
+                          setSelectedMetrics(selectedMetrics.filter(m => m !== 'RMSE'));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">RMSE</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedMetrics.includes('R2')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedMetrics([...selectedMetrics, 'R2']);
+                        } else {
+                          setSelectedMetrics(selectedMetrics.filter(m => m !== 'R2'));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">R²</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabela de Modelos */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Modelo
+                    </th>
+                    {selectedMetrics.includes('RMSE') && (
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        RMSE (↓)
+                      </th>
+                    )}
+                    {selectedMetrics.includes('R2') && (
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        R² (↑)
+                      </th>
+                    )}
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {getSortedModels().map((model, index) => (
+                    <tr key={model.Model} className={index === 0 ? 'bg-green-50' : 'hover:bg-gray-50'}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {model.Model}
+                        {index === 0 && (
+                          <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Melhor
+                          </span>
+                        )}
+                      </td>
+                      {selectedMetrics.includes('RMSE') && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatNumber(model.RMSE)}
+                        </td>
+                      )}
+                      {selectedMetrics.includes('R2') && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatNumber(model.R2)}
+                        </td>
+                      )}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          index === 0 
+                            ? 'bg-green-100 text-green-800' 
+                            : index === 1 
+                              ? 'bg-blue-100 text-blue-800'
+                              : index === 2
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {index === 0 ? 'Top 1' : index === 1 ? 'Top 2' : index === 2 ? 'Top 3' : 'Outro'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Insights */}
+            <div className="mt-6 p-4 bg-indigo-50 rounded-lg">
+              <h3 className="text-lg font-semibold text-indigo-900 mb-2">Insights</h3>
+              <p className="text-indigo-800">
+                O <strong>Gradient Boosting Regressor</strong> apresentou o melhor desempenho geral, com o menor RMSE ({formatNumber(modelData.find(m => m.Model === 'Gradient Boosting Regressor')?.RMSE || 0)}) 
+                e o maior R² ({formatNumber(modelData.find(m => m.Model === 'Gradient Boosting Regressor')?.R2 || 0)}). 
+                Isso indica que este modelo tem maior precisão nas previsões com base nos dados climáticos fornecidos.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Seção de Dados Climáticos */}
+        <section>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Dados Climáticos</h2>
+            
+            {/* Tabela de Dados Climáticos */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Data
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Precipitação (mm)
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Pressão Atm (hPa)
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Temp. Média (°C)
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Temp. Máx (°C)
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Temp. Mín (°C)
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Umidade (%)
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Vel. Vento (km/h)
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Rad. Solar
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Evapotransp.
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {currentClimateData.map((data, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {data.Data}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(data.Precipitacao)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(data.PressaoAtm)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(data.TempMedia)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(data.TempMax)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(data.TempMin)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(data.UmidadeRelativa)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(data.VelocidadeVento)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(data.RadiacaoSolar)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(data.Evapotranspiracao)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Paginação */}
+            <div className="flex items-center justify-between mt-6">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Próximo
+                </button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Mostrando <span className="font-medium">{indexOfFirstItem + 1}</span> a <span className="font-medium">{Math.min(indexOfLastItem, climateData.length)}</span> de{' '}
+                    <span className="font-medium">{climateData.length}</span> registros
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <span className="sr-only">Anterior</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                      const page = i + 1;
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            currentPage === page
+                              ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <span className="sr-only">Próximo</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="mt-12 text-center text-gray-600">
+          <p>Dashboard de Análise Climática - Dados processados e visualizados para facilitar a tomada de decisões</p>
+          <p className="text-sm mt-2">© 2024 - Todos os direitos reservados</p>
+        </footer>
+      </div>
+    </div>
+  );
+};
+
+export default App;

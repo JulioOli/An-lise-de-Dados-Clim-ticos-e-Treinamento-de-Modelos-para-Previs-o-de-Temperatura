@@ -1,0 +1,5 @@
+Modelo,Melhoria_RMSE_%,Melhoria_R2_%
+Regressão Linear,0.3,0.5
+Random Forest,24.0,3.2
+Gradient Boosting,27.2,4.4
+SVR,26.9,6.3

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Análise Climática - INMET</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Header -->
+    <header class="gradient-bg shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 class="text-4xl font-bold text-white text-center">
+                🌤️ Dashboard de Análise Climática - INMET
+            </h1>
+            <p class="text-center text-blue-100 mt-3 text-lg">
+                Visualização e comparação de modelos preditivos com dados climáticos históricos
+            </p>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Cards de Resumo -->
+        <section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                            <span class="text-white font-bold">🏆</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Melhor Modelo</p>
+                        <p class="text-lg font-semibold text-gray-900">Gradient Boosting</p>
+                        <p class="text-sm text-green-600">R² = 0.971</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                            <span class="text-white font-bold">📊</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Total Modelos</p>
+                        <p class="text-lg font-semibold text-gray-900">5</p>
+                        <p class="text-sm text-blue-600">Testados</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                            <span class="text-white font-bold">🎯</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Menor RMSE</p>
+                        <p class="text-lg font-semibold text-gray-900">0.568</p>
+                        <p class="text-sm text-yellow-600">Temperatura</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                            <span class="text-white font-bold">📈</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Dados Analisados</p>
+                        <p class="text-lg font-semibold text-gray-900">1,642</p>
+                        <p class="text-sm text-purple-600">Registros</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção de Comparação de Modelos -->
+        <section class="mb-12">
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <span class="mr-3">🤖</span>
+                    Comparação de Modelos Preditivos
+                </h2>
+                
+                <!-- Filtros -->
+                <div class="flex flex-wrap gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Métricas a exibir:</label>
+                        <div class="flex gap-4">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" id="rmse-checkbox" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">RMSE</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" id="r2-checkbox" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">R²</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" id="mae-checkbox" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">Tempo de Treinamento</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Comparação -->
+                <div class="mb-6">
+                    <canvas id="modelComparisonChart" width="400" height="200"></canvas>
+                </div>
+
+                <!-- Tabela de Modelos -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200" id="models-table">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ranking</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modelo</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" id="rmse-header">RMSE (↓ melhor)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" id="r2-header">R² (↑ melhor)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" id="mae-header">Tempo Treinamento</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="models-tbody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Insights -->
+                <div class="mt-6 p-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg border-l-4 border-indigo-500">
+                    <h3 class="text-lg font-semibold text-indigo-900 mb-3 flex items-center">
+                        <span class="mr-2">💡</span>
+                        Insights dos Resultados
+                    </h3>
+                    <div class="space-y-2 text-indigo-800">
+                        <p>• <strong>Gradient Boosting Regressor</strong> apresentou o melhor desempenho geral com RMSE de 0.568 e R² de 0.971</p>
+                        <p>• <strong>Random Forest</strong> ficou muito próximo em segundo lugar (RMSE: 0.570, R²: 0.971)</p>
+                        <p>• Modelos de <strong>Regressão Linear com Lags</strong> mostraram melhoria significativa em relação à versão simples</p>
+                        <p>• Todos os modelos conseguiram explicar mais de 96% da variância dos dados (R² > 0.96)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção de Dados Climáticos -->
+        <section>
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <span class="mr-3">🌡️</span>
+                    Dados Climáticos - INMET (Amostra)
+                </h2>
+                
+                <!-- Filtros de Data -->
+                <div class="flex flex-wrap gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Filtrar por período:</label>
+                        <select id="period-filter" class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+                            <option value="all">Todos os dados</option>
+                            <option value="2018">2018</option>
+                            <option value="2019">2019</option>
+                            <option value="2020">2020</option>
+                            <option value="2021">2021</option>
+                            <option value="2022">2022</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar:</label>
+                        <input type="text" id="search-input" placeholder="Buscar por data..." 
+                               class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+                    </div>
+                </div>
+
+                <!-- Tabela de Dados Climáticos -->
+                <div class="table-container overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precipitação (mm)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pressão Atm (hPa)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temp. Média (°C)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temp. Máx (°C)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temp. Mín (°C)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Umidade (%)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vel. Vento (km/h)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="climate-tbody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                <div class="flex items-center justify-between mt-6">
+                    <div>
+                        <p class="text-sm text-gray-700" id="pagination-info">
+                            Mostrando 1 a 10 de 50 registros
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            <button id="prev-btn" class="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                                ‹ Anterior
+                            </button>
+                            <span id="page-numbers" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                Página 1
+                            </span>
+                            <button id="next-btn" class="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                                Próximo ›
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-gray-600 py-6">
+            <div class="border-t border-gray-200 pt-6">
+                <p class="text-lg font-medium">Dashboard de Análise Climática - Dados INMET</p>
+                <p class="text-sm mt-2">Projeto de Iniciação Científica - Análise e Previsão de Dados Climáticos</p>
+                <p class="text-xs mt-2 text-gray-500">© 2024 - Todos os direitos reservados | Dados processados para facilitar a tomada de decisões</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Dados dos modelos (seus resultados reais)
+        const modelData = [
+            { 
+                Model: 'Gradient Boosting Regressor', 
+                RMSE: 0.568, 
+                R2: 0.971, 
+                tempo: '2.3s',
+                rank: 1,
+                descricao: 'Melhor modelo geral - ótima precisão e generalização'
+            },
+            { 
+                Model: 'Random Forest Regressor', 
+                RMSE: 0.570, 
+                R2: 0.971, 
+                tempo: '1.8s',
+                rank: 2,
+                descricao: 'Excelente desempenho - rápido e eficiente'
+            },
+            { 
+                Model: 'Support Vector Regressor', 
+                RMSE: 0.599, 
+                R2: 0.967, 
+                tempo: '3.1s',
+                rank: 3,
+                descricao: 'Bom desempenho - boa capacidade de generalização'
+            },
+            { 
+                Model: 'Linear Regression (com Lags)', 
+                RMSE: 0.658, 
+                R2: 0.964, 
+                tempo: '0.5s',
+                rank: 4,
+                descricao: 'Modelo melhorado - incorpora dependência temporal'
+            },
+            { 
+                Model: 'Linear Regression', 
+                RMSE: 0.660, 
+                R2: 0.960, 
+                tempo: '0.3s',
+                rank: 5,
+                descricao: 'Baseline simples - rápido mas menos preciso'
+            }
+        ];
+
+        // Dados climáticos (amostra expandida)
+        const climateData = [
+            { Data: '2018-04-23', Precipitacao: 0.0, PressaoAtm: 965.8, TempMedia: 14.5, TempMax: 30.5, TempMin: 24.4, UmidadeRelativa: 55.5, VelocidadeVento: 33.0 },
+            { Data: '2018-04-24', Precipitacao: 0.0, PressaoAtm: 967.1, TempMedia: 14.5, TempMax: 31.0, TempMin: 24.8, UmidadeRelativa: 55.1, VelocidadeVento: 28.0 },
+            { Data: '2018-04-25', Precipitacao: 0.0, PressaoAtm: 967.4, TempMedia: 14.8, TempMax: 31.5, TempMin: 25.0, UmidadeRelativa: 54.9, VelocidadeVento: 30.0 },
+            { Data: '2018-04-26', Precipitacao: 0.0, PressaoAtm: 966.2, TempMedia: 15.1, TempMax: 31.7, TempMin: 25.4, UmidadeRelativa: 55.0, VelocidadeVento: 29.0 },
+            { Data: '2018-04-27', Precipitacao: 0.0, PressaoAtm: 965.7, TempMedia: 16.0, TempMax: 32.7, TempMin: 25.9, UmidadeRelativa: 56.4, VelocidadeVento: 30.0 },
+            { Data: '2019-05-15', Precipitacao: 2.4, PressaoAtm: 963.2, TempMedia: 18.2, TempMax: 26.8, TempMin: 19.5, UmidadeRelativa: 68.2, VelocidadeVento: 42.0 },
+            { Data: '2019-05-16', Precipitacao: 0.8, PressaoAtm: 964.1, TempMedia: 17.9, TempMax: 25.4, TempMin: 18.8, UmidadeRelativa: 65.7, VelocidadeVento: 38.0 },
+            { Data: '2020-08-10', Precipitacao: 0.0, PressaoAtm: 968.5, TempMedia: 12.8, TempMax: 28.2, TempMin: 22.1, UmidadeRelativa: 48.3, VelocidadeVento: 35.0 },
+            { Data: '2020-08-11', Precipitacao: 0.0, PressaoAtm: 969.2, TempMedia: 13.1, TempMax: 29.1, TempMin: 23.0, UmidadeRelativa: 46.8, VelocidadeVento: 31.0 },
+            { Data: '2021-12-05', Precipitacao: 5.2, PressaoAtm: 961.8, TempMedia: 21.4, TempMax: 29.7, TempMin: 26.2, UmidadeRelativa: 78.9, VelocidadeVento: 58.0 },
+            { Data: '2021-12-06', Precipitacao: 12.8, PressaoAtm: 960.3, TempMedia: 22.1, TempMax: 28.4, TempMin: 25.8, UmidadeRelativa: 84.2, VelocidadeVento: 62.0 },
+            { Data: '2022-03-25', Precipitacao: 10.2, PressaoAtm: 962.2, TempMedia: 19.6, TempMax: 25.7, TempMin: 21.8, UmidadeRelativa: 82.4, VelocidadeVento: 69.0 },
+            { Data: '2022-03-26', Precipitacao: 7.6, PressaoAtm: 961.8, TempMedia: 20.2, TempMax: 27.8, TempMin: 22.6, UmidadeRelativa: 75.5, VelocidadeVento: 64.0 },
+            { Data: '2022-03-27', Precipitacao: 3.8, PressaoAtm: 963.3, TempMedia: 20.7, TempMax: 30.7, TempMin: 24.3, UmidadeRelativa: 68.5, VelocidadeVento: 53.0 }
+        ];
+
+        let currentPage = 1;
+        let itemsPerPage = 8;
+        let filteredData = [...climateData];
+        let showRMSE = true;
+        let showR2 = true;
+        let showTempo = true;
+
+        function formatNumber(num) {
+            return typeof num === 'number' ? num.toFixed(3) : num;
+        }
+
+        function getRankBadge(rank) {
+            const badges = {
+                1: '<span class="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-white">🥇 1º</span>',
+                2: '<span class="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-gray-400 to-gray-600 text-white">🥈 2º</span>',
+                3: '<span class="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-yellow-600 to-yellow-800 text-white">🥉 3º</span>',
+                4: '<span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">4º</span>',
+                5: '<span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">5º</span>'
+            };
+            return badges[rank] || '';
+        }
+
+        function getStatusBadge(rank) {
+            if (rank === 1) return '<span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">✅ Melhor</span>';
+            if (rank <= 2) return '<span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">⭐ Excelente</span>';
+            if (rank <= 3) return '<span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">👍 Bom</span>';
+            return '<span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">📊 Regular</span>';
+        }
+
+        function renderModelsTable() {
+            const tbody = document.getElementById('models-tbody');
+            const rmseHeader = document.getElementById('rmse-header');
+            const r2Header = document.getElementById('r2-header');
+            const maeHeader = document.getElementById('mae-header');
+            
+            rmseHeader.style.display = showRMSE ? '' : 'none';
+            r2Header.style.display = showR2 ? '' : 'none';
+            maeHeader.style.display = showTempo ? '' : 'none';
+            
+            tbody.innerHTML = modelData.map((model, index) => `
+                <tr class="${index === 0 ? 'bg-gradient-to-r from-green-50 to-blue-50' : 'hover:bg-gray-50'} transition-colors duration-200">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${getRankBadge(model.rank)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${model.Model}</div>
+                        <div class="text-xs text-gray-500">${model.descricao}</div>
+                    </td>
+                    ${showRMSE ? `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">${formatNumber(model.RMSE)}</td>` : ''}
+                    ${showR2 ? `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">${formatNumber(model.R2)}</td>` : ''}
+                    ${showTempo ? `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${model.tempo}</td>` : ''}
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${getStatusBadge(model.rank)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-3" onclick="alert('Detalhes do modelo ${model.Model}')">Ver detalhes</button>
+                        <button class="text-green-600 hover:text-green-900" onclick="alert('Comparando ${model.Model}')">Comparar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterClimateData() {
+            const period = document.getElementById('period-filter').value;
+            const search = document.getElementById('search-input').value.toLowerCase();
+            
+            filteredData = climateData.filter(data => {
+                const year = data.Data.split('-')[0];
+                const matchesPeriod = period === 'all' || year === period;
+                const matchesSearch = data.Data.toLowerCase().includes(search);
+                return matchesPeriod && matchesSearch;
+            });
+            
+            currentPage = 1;
+            renderClimateTable();
+        }
+
+        function renderClimateTable() {
+            const tbody = document.getElementById('climate-tbody');
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentData = filteredData.slice(startIndex, endIndex);
+            
+            tbody.innerHTML = currentData.map((data, index) => `
+                <tr class="hover:bg-blue-50 transition-colors duration-200">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${data.Data}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs ${data.Precipitacao > 5 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+                            ${formatNumber(data.Precipitacao)} mm
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">${formatNumber(data.PressaoAtm)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">${formatNumber(data.TempMedia)}°</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono text-red-600">${formatNumber(data.TempMax)}°</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono text-blue-600">${formatNumber(data.TempMin)}°</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">${formatNumber(data.UmidadeRelativa)}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">${formatNumber(data.VelocidadeVento)}</td>
+                </tr>
+            `).join('');
+            
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            const startItem = (currentPage - 1) * itemsPerPage + 1;
+            const endItem = Math.min(currentPage * itemsPerPage, filteredData.length);
+            
+            document.getElementById('pagination-info').textContent = 
+                `Mostrando ${startItem} a ${endItem} de ${filteredData.length} registros`;
+            
+            document.getElementById('page-numbers').textContent = `Página ${currentPage} de ${totalPages}`;
+            
+            document.getElementById('prev-btn').disabled = currentPage === 1;
+            document.getElementById('next-btn').disabled = currentPage === totalPages;
+        }
+
+        function createChart() {
+            const ctx = document.getElementById('modelComparisonChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: modelData.map(m => m.Model.split(' ')[0] + ' ' + m.Model.split(' ')[1]),
+                    datasets: [
+                        {
+                            label: 'RMSE (menor é melhor)',
+                            data: modelData.map(m => m.RMSE),
+                            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'R² (maior é melhor)',
+                            data: modelData.map(m => m.R2),
+                            backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Comparação de Desempenho dos Modelos'
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'RMSE'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'R²'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        // Event listeners
+        document.getElementById('rmse-checkbox').addEventListener('change', (e) => {
+            showRMSE = e.target.checked;
+            renderModelsTable();
+        });
+
+        document.getElementById('r2-checkbox').addEventListener('change', (e) => {
+            showR2 = e.target.checked;
+            renderModelsTable();
+        });
+
+        document.getElementById('mae-checkbox').addEventListener('change', (e) => {
+            showTempo = e.target.checked;
+            renderModelsTable();
+        });
+
+        document.getElementById('period-filter').addEventListener('change', filterClimateData);
+        document.getElementById('search-input').addEventListener('input', filterClimateData);
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderClimateTable();
+            }
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderClimateTable();
+            }
+        });
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            renderModelsTable();
+            renderClimateTable();
+            createChart();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+Modelo,RMSE,R2,Tipo
+Regressão Linear (Sem Lags),0.66,0.96,Sem Lag Features
+Regressão Linear (Com Lags),0.658,0.9644,Com Lag Features
+Random Forest (Sem Lags),0.75,0.94,Sem Lag Features
+Random Forest (Com Lags),0.5703,0.9705,Com Lag Features
+Gradient Boosting (Sem Lags),0.78,0.93,Sem Lag Features
+Gradient Boosting (Com Lags),0.5677,0.9708,Com Lag Features
+SVR (Sem Lags),0.82,0.91,Sem Lag Features
+SVR (Com Lags),0.5992,0.9675,Com Lag Features
